@@ -13,12 +13,10 @@ import org.example.model.RoleName;
 @Builder
 public class UserUpdateDto {
 
-    private Integer id;
-
-    @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
+    @Size(min = 3, max = 100, message = "Username must be between 3 and 100 characters")
     private String username;
 
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @Size(min = 8, max = 50, message = "Password must be between 8 and 50 characters")
     private String password;
 
     private RoleName role;

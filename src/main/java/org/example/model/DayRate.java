@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "day_rates",
         uniqueConstraints = @UniqueConstraint(
-                columnNames = {"base_currency", "quote_currency", "created"}
+                columnNames = {"base_currency", "quote_currency", "rate_date"}
         )
 )
 public class DayRate {
@@ -39,9 +40,23 @@ public class DayRate {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "rate_date", nullable = false)
+    private LocalDate rateDate;
+
     @Column(name = "buy_rate", nullable = false, precision = 19, scale = 6)
     private BigDecimal buyRate;
 
     @Column(name = "sell_rate", nullable = false, precision = 19, scale = 6)
     private BigDecimal sellRate;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

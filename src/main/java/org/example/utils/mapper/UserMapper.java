@@ -2,32 +2,50 @@ package org.example.utils.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.example.model.User;
+import org.example.model.dto.currencybalance.CurrencyBalanceReadDto;
 import org.example.model.dto.user.UserCreateDto;
 import org.example.model.dto.user.UserReadDto;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Component
 public class UserMapper {
 
     public UserReadDto toReadDto(User user) {
-        UserReadDto userReadDto = new UserReadDto();
 
-        userReadDto.setId(user.getId());
-        userReadDto.setUsername(user.getUsername());
-        userReadDto.setPassword(user.getPassword());
-        userReadDto.setRole(user.getRole());
+        List<CurrencyBalanceReadDto> balances = user.getBalances() != null ?
+                user.getBalances().stream()
+                        .map(balance -> CurrencyBalanceReadDto.builder()
+                                .id(balance.getId())
+                                .currency(balance.getCurrency())
+                                .amount(balance.getAmount())
+                                .createdAt(balance.getCreatedAt())
+                                .updatedAt(balance.getUpdatedAt())
+                                .username(balance.getUser().getUsername())
+                                .build())
+                        .collect(Collectors.toList())
+                : new ArrayList<>();
 
-        return userReadDto;
+        return UserReadDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .role(user.getRole())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .currencyBalances(balances)
+                .build();
     }
 
-    public User toEntity(UserCreateDto dto) {
-        User user = new User();
+    public User toEntity(UserCreateDto userCreateDto) {
 
-        user.setUsername(dto.getUsername());
-        user.setPassword(dto.getPassword());
-        user.setRole(dto.getRole());
-
-        return user;
+        return User.builder()
+                .username(userCreateDto.getUsername())
+                .password(userCreateDto.getPassword())
+                .role(userCreateDto.getRole())
+                .build();
     }
 }

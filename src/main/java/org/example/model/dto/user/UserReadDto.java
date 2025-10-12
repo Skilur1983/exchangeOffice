@@ -5,6 +5,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.model.RoleName;
+import org.example.model.dto.currencybalance.CurrencyBalanceReadDto;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -13,7 +17,9 @@ import org.example.model.RoleName;
 public class UserReadDto {
 
     private Integer id;
-    private RoleName role;
     private String username;
-    private String password;
+    private RoleName role;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private List<CurrencyBalanceReadDto> currencyBalances;
 }

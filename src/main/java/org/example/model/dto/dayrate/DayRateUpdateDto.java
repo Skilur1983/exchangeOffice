@@ -1,0 +1,46 @@
+package org.example.model.dto.dayrate;
+
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.example.model.Currency;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class DayRateUpdateDto {
+
+    @NotNull(message = "Base currency is required")
+    private Currency baseCurrency;
+
+    @NotNull(message = "Quote currency is required")
+    private Currency quoteCurrency;
+
+    @NotNull(message = "Rate date is required")
+    private LocalDate rateDate;
+
+    @NotNull(message = "Buy rate is required")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Buy rate must be greater than 0")
+    @Digits(integer = 13, fraction = 6, message = "Buy rate format is invalid")
+    private BigDecimal buyRate;
+
+    @NotNull(message = "Sell rate is required")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Sell rate must be greater than 0")
+    @Digits(integer = 13, fraction = 6, message = "Sell rate format is invalid")
+    private BigDecimal sellRate;
+
+    @AssertTrue(message = "Buy rate must be less than or equal to sell rate")
+    public boolean isRateValid() {
+        if (buyRate == null || sellRate == null) return true;
+        return buyRate.compareTo(sellRate) <= 0;
+    }
+}
