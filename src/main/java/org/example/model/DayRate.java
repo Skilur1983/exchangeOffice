@@ -18,7 +18,11 @@ import java.time.LocalDateTime;
 @Table(name = "day_rates",
         uniqueConstraints = @UniqueConstraint(
                 columnNames = {"base_currency", "quote_currency", "rate_date"}
-        )
+        ),
+        indexes = {
+                @Index(name = "idx_rate_date", columnList = "rate_date"),
+                @Index(name = "idx_rate_currencies_date", columnList = "base_currency, quote_currency, rate_date")
+        }
 )
 public class DayRate {
 

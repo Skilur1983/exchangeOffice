@@ -11,7 +11,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "currency_balances")
+@Table(name = "currency_balances",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "currency"}),
+        indexes = {
+                @Index(name = "idx_balance_user_currency", columnList = "user_id, currency"),
+                @Index(name = "idx_balance_currency", columnList = "currency")
+        }
+)
 public class CurrencyBalance {
 
     @Id
@@ -24,6 +30,10 @@ public class CurrencyBalance {
 
     @Column(name = "amount", nullable = false, precision = 19, scale = 4)
     private BigDecimal amount;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
