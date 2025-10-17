@@ -1,9 +1,11 @@
 package org.example.model.dto.deal;
 
 import lombok.*;
+import org.example.model.Currency;
+import org.example.model.DealStatus;
 import org.example.model.DealType;
-import org.example.model.dto.currencybalance.CurrencyBalanceReadDto;
 import org.example.model.dto.dayrate.DayRateReadDto;
+import org.example.model.dto.user.UserReadDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,11 +17,24 @@ import java.time.LocalDateTime;
 public class DealReadDto {
 
     private Integer id;
-    private CurrencyBalanceReadDto sellerCurrencyBalance;
-    private CurrencyBalanceReadDto buyerCurrencyBalance;
+    private UserReadDto seller;
+    private Currency sellerCurrency;
+    private UserReadDto buyer;
+    private Currency buyerCurrency;
     private DayRateReadDto dayRate;
-    private BigDecimal baseAmount;
+    private BigDecimal soldAmount;
+    private BigDecimal purchasedAmount;
+    private BigDecimal exchangeRateUsed;
     private DealType dealType;
+    private DealStatus status;
+    private String statusReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime pausedAt;
+    private LocalDateTime completedAt;
+    private LocalDateTime cancelledAt;
+
+    public String getCurrencyPair() {
+        return sellerCurrency + "/" + buyerCurrency;
+    }
 }

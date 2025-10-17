@@ -1,5 +1,6 @@
 package org.example.model.dto.user;
 
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,10 +15,11 @@ import org.example.model.RoleName;
 public class UserUpdateDto {
 
     @Size(min = 3, max = 100, message = "Username must be between 3 and 100 characters")
+    @Pattern(
+            regexp = "^[a-zA-Z0-9_-]+$",
+            message = "Username can only contain letters, numbers, underscores, and hyphens"
+    )
     private String username;
-
-    @Size(min = 8, max = 100, message = "Password must be between 8 and 50 characters")
-    private String password;
 
     private RoleName role;
 }

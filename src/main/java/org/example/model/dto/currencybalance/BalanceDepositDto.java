@@ -16,17 +16,19 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CurrencyBalanceCreateDto {
+public class BalanceDepositDto {
+
+    @NotNull(message = "User ID is required")
+    @Positive(message = "User ID must be positive")
+    private Integer userId;
 
     @NotNull(message = "Currency is required")
     private Currency currency;
 
     @NotNull(message = "Amount is required")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Amount must be 0 or greater")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Amount must be greater than 0")
     @Digits(integer = 15, fraction = 4, message = "Amount format is invalid")
     private BigDecimal amount;
 
-    @NotNull(message = "User ID is required")
-    @Positive(message = "User ID must be positive")
-    private Integer userId;
+    private String description;
 }

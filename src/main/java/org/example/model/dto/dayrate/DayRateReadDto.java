@@ -22,10 +22,13 @@ public class DayRateReadDto {
     private LocalDate rateDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private BigDecimal buyRate;
-    private BigDecimal sellRate;
+    private BigDecimal buyRate; // Rate at which bank BUYS base currency (lower)
+    private BigDecimal sellRate; // Rate at which bank SELLS base currency (higher)
 
     public String getCurrencyPair() {
+        if (baseCurrency == null || quoteCurrency == null) {
+            return "N/A";
+        }
         return baseCurrency + "/" + quoteCurrency;
     }
 }

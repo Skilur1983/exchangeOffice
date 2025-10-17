@@ -20,8 +20,7 @@ import java.time.LocalDateTime;
                 columnNames = {"base_currency", "quote_currency", "rate_date"}
         ),
         indexes = {
-                @Index(name = "idx_rate_date", columnList = "rate_date"),
-                @Index(name = "idx_rate_currencies_date", columnList = "base_currency, quote_currency, rate_date")
+                @Index(name = "idx_rate_date", columnList = "rate_date")
         }
 )
 public class DayRate {
@@ -48,10 +47,10 @@ public class DayRate {
     private LocalDate rateDate;
 
     @Column(name = "buy_rate", nullable = false, precision = 19, scale = 6)
-    private BigDecimal buyRate;
+    private BigDecimal buyRate; // Rate at which bank BUYS base currency (lower)
 
     @Column(name = "sell_rate", nullable = false, precision = 19, scale = 6)
-    private BigDecimal sellRate;
+    private BigDecimal sellRate; // Rate at which bank SELLS base currency (higher)
 
     @PrePersist
     protected void onCreate() {

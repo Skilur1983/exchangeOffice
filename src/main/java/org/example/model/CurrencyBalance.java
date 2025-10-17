@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 @Table(name = "currency_balances",
         uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "currency"}),
         indexes = {
-                @Index(name = "idx_balance_user_currency", columnList = "user_id, currency"),
                 @Index(name = "idx_balance_currency", columnList = "currency")
         }
 )
@@ -55,5 +54,24 @@ public class CurrencyBalance {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public void credit(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Credit amount must be positive");
+        }
+        this.amount = this.amount.add(amount);
+    }
+
+    public void debit(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Debit amount must be positive");
+        }
+        if (this.amount.compareTo(amount) < 0) {
+            throw new IllegalArgumentException(
+                    "Insufficient balance. Available: " + this.amount + ", Required: " + amount
+            );
+        }
+        this.amount = this.amount.subtract(amount);
     }
 }

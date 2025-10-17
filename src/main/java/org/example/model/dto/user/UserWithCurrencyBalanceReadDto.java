@@ -21,5 +21,5 @@ public class UserWithCurrencyBalanceReadDto {
     private RoleName role;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<CurrencyBalanceReadDto> currencyBalanceReadDtos;
+    private List<CurrencyBalanceReadDto> balances;
 }
