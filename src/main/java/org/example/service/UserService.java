@@ -9,8 +9,8 @@ import org.springframework.data.domain.Pageable;
 
 public interface UserService {
     UserReadDto getById(int id);
-    PageDto<UserReadDto> getAll(Pageable pageable);
     UserReadDto getByUsername(String login);
+    PageDto<UserReadDto> getAll(Pageable pageable);
     User getEntityById(int id);
     void save(UserCreateDto userCreateDto);
     void update(int id, UserUpdateDto userUpdateDto);

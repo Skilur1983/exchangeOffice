@@ -5,30 +5,19 @@ import org.example.model.User;
 import org.example.model.dto.currencybalance.CurrencyBalanceReadDto;
 import org.example.model.dto.user.UserCreateDto;
 import org.example.model.dto.user.UserReadDto;
+import org.example.model.dto.user.UserWithCurrencyBalanceReadDto;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Component
 public class UserMapper {
 
-    public UserReadDto toReadDto(User user) {
+    private final CurrencyBalanceMapper currencyBalanceMapper;
 
-        List<CurrencyBalanceReadDto> balances = user.getBalances() != null ?
-                user.getBalances().stream()
-                        .map(balance -> CurrencyBalanceReadDto.builder()
-                                .id(balance.getId())
-                                .currency(balance.getCurrency())
-                                .amount(balance.getAmount())
-                                .createdAt(balance.getCreatedAt())
-                                .updatedAt(balance.getUpdatedAt())
-                                .username(balance.getUser().getUsername())
-                                .build())
-                        .collect(Collectors.toList())
-                : new ArrayList<>();
+    public UserReadDto toReadDto(User user) {
 
         return UserReadDto.builder()
                 .id(user.getId())
@@ -36,15 +25,32 @@ public class UserMapper {
                 .role(user.getRole())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
-                .currencyBalances(balances)
                 .build();
     }
 
-    public User toEntity(UserCreateDto userCreateDto) {
+    public UserWithCurrencyBalanceReadDto toWithCurrencyBalanceReadDto(User user) {
+
+        List<CurrencyBalanceReadDto> balances = user.getBalances() != null ?
+                user.getBalances().stream()
+                        .map(currencyBalanceMapper::toReadDto)
+                        .toList()
+                : Collections.emptyList();
+
+        return UserWithCurrencyBalanceReadDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .role(user.getRole())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .balances(balances)
+                .build();
+    }
+
+    public User toEntity(UserCreateDto userCreateDto, String hashedPassword) {
 
         return User.builder()
                 .username(userCreateDto.getUsername())
-                .password(userCreateDto.getPassword())
+                .password(hashedPassword)
                 .role(userCreateDto.getRole())
                 .build();
     }
