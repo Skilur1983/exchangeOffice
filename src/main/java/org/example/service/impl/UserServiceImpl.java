@@ -6,6 +6,7 @@ import org.example.model.RoleName;
 import org.example.model.User;
 import org.example.model.dto.PageDto;
 import org.example.model.dto.user.UserCreateDto;
+import org.example.model.dto.user.UserPasswordChangeDto;
 import org.example.model.dto.user.UserReadDto;
 import org.example.model.dto.user.UserUpdateDto;
 import org.example.repository.UserRepository;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +30,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
 
     @Override
+    @Transactional(readOnly = true)
     public UserReadDto getById(int id) {
         return userRepository.findById(id)
                 .map(userMapper::toReadDto)
@@ -35,6 +38,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PageDto<UserReadDto> getAll(Pageable pageable) {
         Page<User> userPage = userRepository.findAll(pageable);
         List<UserReadDto> userReadDtos = userPage.stream()
@@ -51,6 +55,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserReadDto getByUsername(String username) {
         return userRepository.findByUsername(username)
                 .map(userMapper::toReadDto)
@@ -58,36 +63,34 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public User getEntityById(int id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User with ID: " + id + " not found"));
     }
 
     @Override
-    public void save(UserCreateDto userCreateDto) {
+    @Transactional
+    public UserReadDto save(UserCreateDto userCreateDto) {
         if (userRepository.findByUsername(userCreateDto.getUsername()).isPresent()) {
             throw new IllegalArgumentException("User with username " + userCreateDto.getUsername() + " already exists.");
         }
 
+        User user = userMapper.toEntity(userCreateDto);
+
         String encodedPassword = passwordEncoder.encode(userCreateDto.getPassword());
+        user.setPassword(encodedPassword);
 
-        User user = User.builder()
-                .username(userCreateDto.getUsername())
-                .password(encodedPassword)
-                .role(userCreateDto.getRole())
-                .build();
-
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        return userMapper.toReadDto(savedUser);
     }
 
     @Override
-    public void update(int id, UserUpdateDto userUpdateDto) {
+    @Transactional
+    public UserReadDto update(int id, UserUpdateDto userUpdateDto) {
         User user = getEntityById(id);
 
-        String encodedPassword = passwordEncoder.encode(userUpdateDto.getPassword());
-
         String newUsername = userUpdateDto.getUsername();
-        String newPassword = encodedPassword;
         RoleName newRole = userUpdateDto.getRole();
 
         if (newUsername != null) {
@@ -98,20 +101,43 @@ public class UserServiceImpl implements UserService {
             user.setUsername(newUsername);
         }
 
-        if (newPassword != null) {
-            user.setPassword(newPassword);
-        }
-
         if (newRole != null) {
             user.setRole(newRole);
         }
+
+        User updatedUser = userRepository.save(user);
+        return userMapper.toReadDto(updatedUser);
+    }
+
+    @Override
+    @Transactional
+    public void updatePassword(int id, UserPasswordChangeDto passwordChangeDto) {
+        User user = getEntityById(id);
+
+        if (!passwordEncoder.matches(passwordChangeDto.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        if (!passwordChangeDto.getNewPassword().equals(passwordChangeDto.getConfirmPassword())) {
+            throw new IllegalArgumentException("New password and confirmation do not match");
+        }
+
+        if (passwordEncoder.matches(passwordChangeDto.getNewPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("New password must be different from current password");
+        }
+
+        String encodedPassword = passwordEncoder.encode(passwordChangeDto.getNewPassword());
+        user.setPassword(encodedPassword);
 
         userRepository.save(user);
     }
 
     @Override
+    @Transactional
     public void deleteById(int id) {
-        getById(id);
+        if (!userRepository.existsById(id)) {
+            throw new EntityNotFoundException("User with ID " + id + " not found");
+        }
         userRepository.deleteById(id);
     }
 }

@@ -46,11 +46,11 @@ public class UserMapper {
                 .build();
     }
 
-    public User toEntity(UserCreateDto userCreateDto, String hashedPassword) {
+    public User toEntity(UserCreateDto userCreateDto) {
 
         return User.builder()
                 .username(userCreateDto.getUsername())
-                .password(hashedPassword)
+                .password(userCreateDto.getPassword())
                 .role(userCreateDto.getRole())
                 .build();
     }
