@@ -21,8 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final PasswordEncoder passwordEncoder;
