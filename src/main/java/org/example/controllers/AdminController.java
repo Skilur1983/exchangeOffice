@@ -1,6 +1,5 @@
 package org.example.controllers;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.model.dto.PageDto;
@@ -46,7 +45,7 @@ public class AdminController {
 
     @PostMapping("/create")
     public ResponseEntity<UserReadDto> create(@Valid @RequestBody UserCreateDto userCreateDto) {
-        userService.save(userCreateDto);
+        userService.create(userCreateDto);
         UserReadDto createdUser = userService.getByUsername(userCreateDto.getUsername());
 
         URI location = URI.create("/admin/users/" + createdUser.getId());

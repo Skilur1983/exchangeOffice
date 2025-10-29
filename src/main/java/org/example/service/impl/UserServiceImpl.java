@@ -5,10 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.model.RoleName;
 import org.example.model.User;
 import org.example.model.dto.PageDto;
-import org.example.model.dto.user.UserCreateDto;
-import org.example.model.dto.user.UserPasswordChangeDto;
-import org.example.model.dto.user.UserReadDto;
-import org.example.model.dto.user.UserUpdateDto;
+import org.example.model.dto.user.*;
 import org.example.repository.UserRepository;
 import org.example.service.UserService;
 import org.example.utils.mapper.UserMapper;
@@ -39,6 +36,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    public UserReadDto getByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .map(userMapper::toReadDto)
+                .orElseThrow(() -> new EntityNotFoundException("User with username: " + username + " not found"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserWithCurrencyBalanceReadDto getByIdWithBalances(Integer id) {
+       return userRepository.findByIdWithBalances(id)
+               .map(userMapper::toWithCurrencyBalanceReadDto)
+                .orElseThrow(() -> new EntityNotFoundException("User with ID " + id + " not found"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PageDto<UserReadDto> getAll(Pageable pageable) {
         Page<User> userPage = userRepository.findAll(pageable);
         List<UserReadDto> userReadDtos = userPage.stream()
@@ -55,23 +68,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public UserReadDto getByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .map(userMapper::toReadDto)
-                .orElseThrow(() -> new EntityNotFoundException("User with username: " + username + " not found"));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public User getEntityById(int id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("User with ID: " + id + " not found"));
-    }
-
-    @Override
     @Transactional
-    public UserReadDto save(UserCreateDto userCreateDto) {
+    public UserReadDto create(UserCreateDto userCreateDto) {
         if (userRepository.findByUsername(userCreateDto.getUsername()).isPresent()) {
             throw new IllegalArgumentException("User with username " + userCreateDto.getUsername() + " already exists.");
         }
@@ -139,5 +137,12 @@ public class UserServiceImpl implements UserService {
             throw new EntityNotFoundException("User with ID " + id + " not found");
         }
         userRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public User getEntityById(int id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User with ID: " + id + " not found"));
     }
 }

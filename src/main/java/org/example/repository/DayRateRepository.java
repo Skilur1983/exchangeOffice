@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -16,12 +15,7 @@ public interface DayRateRepository extends JpaRepository<DayRate, Integer> {
             Currency baseCurrency,
             Currency quoteCurrency,
             LocalDate date);
-    List<DayRate> findAllByBaseCurrencyAndQuoteCurrencyAndRateDateBetween(
-            Currency baseCurrency,
-            Currency quoteCurrency,
-            LocalDate startDate,
-            LocalDate endDate
-    );
+
     boolean existsByBaseCurrencyAndQuoteCurrencyAndRateDate(
             Currency baseCurrency,
             Currency quoteCurrency,

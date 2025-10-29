@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.model.DayRate;
 import org.example.model.dto.dayrate.DayRateCreateDto;
 import org.example.model.dto.dayrate.DayRateReadDto;
+import org.example.model.dto.dayrate.DayRateUpdateDto;
 import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
@@ -31,5 +32,14 @@ public class DayRateMapper {
                 .buyRate(dayRateCreateDto.getBuyRate())
                 .sellRate(dayRateCreateDto.getSellRate())
                 .build();
+    }
+
+    public void updateEntity(DayRate dayRate, DayRateUpdateDto dto) {
+        if (dayRate == null || dto == null) {
+            return;
+        }
+
+        dayRate.setBuyRate(dto.getBuyRate());
+        dayRate.setSellRate(dto.getSellRate());
     }
 }
