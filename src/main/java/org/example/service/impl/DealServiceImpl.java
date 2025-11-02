@@ -132,11 +132,11 @@ public class DealServiceImpl implements DealService {
         Currency quoteCurrency;
 
         if (dto.getDealType() == DealType.BUY) {
-            baseCurrency = dto.getBuyerCurrency();   // Bank buying this
-            quoteCurrency = dto.getSellerCurrency(); // Bank paying with this
+            baseCurrency = dto.getSellerCurrency();   // Bank buying this
+            quoteCurrency = dto.getBuyerCurrency(); // Bank paying with this
         } else {
-            baseCurrency = dto.getSellerCurrency();  // Bank selling this
-            quoteCurrency = dto.getBuyerCurrency();  // Customer paying with this
+            baseCurrency = dto.getBuyerCurrency();  // Bank selling this
+            quoteCurrency = dto.getSellerCurrency();  // Customer paying with this
         }
 
         LocalDate today = LocalDate.now();
