@@ -56,6 +56,8 @@ public class Deal {
     @Column(name = "sold_amount", nullable = false, precision = 19, scale = 4)
     private BigDecimal soldAmount;
 
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = false)
     @Column(name = "purchased_amount", precision = 19, scale = 4)
     private BigDecimal purchasedAmount;
 

@@ -30,10 +30,13 @@ public class DealCreateDto {
     @NotNull(message = "Buyer's currency is required")
     private Currency buyerCurrency;
 
-    @NotNull(message = "Sold amount is required")
     @DecimalMin(value = "0.0", inclusive = false, message = "Sold amount must be greater than 0")
     @Digits(integer = 15, fraction = 4, message = "Sold amount format is invalid")
     private BigDecimal soldAmount;
+    
+    @DecimalMin(value = "0.0", inclusive = false, message = "Purchased amount must be greater than 0")
+    @Digits(integer = 15, fraction = 4, message = "Sold amount format is invalid")
+    private BigDecimal purchasedAmount;
 
     @NotNull(message = "Deal type is required")
     private DealType dealType;

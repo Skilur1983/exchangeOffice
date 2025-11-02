@@ -54,6 +54,7 @@ public class DealMapper {
                 .buyer(buyer)
                 .buyerCurrency(dealCreateDto.getBuyerCurrency())
                 .soldAmount(dealCreateDto.getSoldAmount())
+                .purchasedAmount(dealCreateDto.getPurchasedAmount())
                 .dealType(dealCreateDto.getDealType())
                 .dayRate(dayRate)
                 .build();

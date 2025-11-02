@@ -30,12 +30,12 @@ public class DayRate {
     private Integer id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "base_currency", nullable = false, length = 20)
-    private Currency baseCurrency;
-
-    @Enumerated(EnumType.STRING)
     @Column(name = "quote_currency", nullable = false, length = 20)
     private Currency quoteCurrency;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "base_currency", nullable = false, length = 20)
+    private Currency baseCurrency;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -47,10 +47,10 @@ public class DayRate {
     private LocalDate rateDate;
 
     @Column(name = "buy_rate", nullable = false, precision = 19, scale = 6)
-    private BigDecimal buyRate; // Rate at which bank BUYS base currency (lower)
+    private BigDecimal buyRate; // Rate at which bank BUYS quote currency (lower)
 
     @Column(name = "sell_rate", nullable = false, precision = 19, scale = 6)
-    private BigDecimal sellRate; // Rate at which bank SELLS base currency (higher)
+    private BigDecimal sellRate; // Rate at which bank SELLS quote currency (higher)
 
     @PrePersist
     protected void onCreate() {
