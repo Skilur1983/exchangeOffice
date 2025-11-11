@@ -1,6 +1,7 @@
 package org.example.service.impl;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.example.model.*;
 import org.example.model.dto.PageDto;
@@ -14,6 +15,7 @@ import org.example.repository.DealRepository;
 import org.example.repository.UserRepository;
 import org.example.service.DealService;
 import org.example.utils.mapper.DealMapper;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,9 @@ public class DealServiceImpl implements DealService {
     private final UserRepository userRepository;
     private final DayRateRepository dayRateRepository;
     private final CurrencyBalanceRepository currencyBalanceRepository;
+
+    private static final int AMOUNT_SCALE = 4;
+    private static final RoundingMode AMOUNT_ROUNDING = RoundingMode.HALF_UP;
 
     @Override
     @Transactional(readOnly = true)
@@ -89,16 +94,21 @@ public class DealServiceImpl implements DealService {
         Deal savedDeal = dealRepository.save(deal);
 
         if (sufficiency.bothSufficient()) {
-            executeDeal(
-                    seller.getId(),
-                    buyer.getId(),
-                    dto.getSellerCurrency(),
-                    dto.getBuyerCurrency(),
-                    amounts);
+            try {
+                executeDeal(
+                        seller.getId(),
+                        buyer.getId(),
+                        dto.getSellerCurrency(),
+                        dto.getBuyerCurrency(),
+                        amounts);
 
-            savedDeal.setStatus(DealStatus.COMPLETED);
-            savedDeal.setCompletedAt(LocalDateTime.now());
-            savedDeal.setStatusReason(null);
+                savedDeal.setStatus(DealStatus.COMPLETED);
+                savedDeal.setCompletedAt(LocalDateTime.now());
+                savedDeal.setStatusReason(null);
+            } catch (OptimisticLockException | DataIntegrityViolationException e) {
+                savedDeal.setStatus(DealStatus.FAILED);
+                savedDeal.setStatusReason("Execution failed: " + e.getMessage());
+            }
             savedDeal = dealRepository.save(savedDeal);
         }
 
@@ -108,13 +118,91 @@ public class DealServiceImpl implements DealService {
     @Override
     @Transactional
     public DealReadDto resumeDeal(Integer dealId, ResumeDealDto dto) {
-        return null;
+        Deal deal = getEntityById(dealId);
+        validateResumableStatus(deal);
+
+        DealStatus originalStatus = deal.getStatus();
+
+        // Validate prerequisites - cancel if validation fails
+        if (!validateDealPrerequisites(deal)) {
+            Deal savedDeal = dealRepository.save(deal);
+            return dealMapper.toReadDto(savedDeal);
+        }
+
+        // Update exchange rate for PAUSED deals - return early if no rate available
+        if (originalStatus == DealStatus.PAUSED && !updateDealWithCurrentRate(deal)) {
+            Deal savedDeal = dealRepository.save(deal);
+            return dealMapper.toReadDto(savedDeal);
+        }
+
+        // Check balance sufficiency
+        CurrencyBalance sellerBalance = fetchBalance(
+                deal.getSeller().getId(),
+                deal.getSellerCurrency(),
+                "Seller"
+        );
+        CurrencyBalance buyerBalance = fetchBalance(
+                deal.getBuyer().getId(),
+                deal.getBuyerCurrency(),
+                "Buyer"
+        );
+
+        BalanceSufficiency sufficiency = checkBalanceSufficiency(
+                sellerBalance,
+                buyerBalance,
+                deal.getSoldAmount(),
+                deal.getPurchasedAmount()
+        );
+
+        // Save deal before attempting execution
+        Deal savedDeal = dealRepository.save(deal);
+
+        if (sufficiency.bothSufficient()) {
+            try {
+                executeDeal(
+                        deal.getSeller().getId(),
+                        deal.getBuyer().getId(),
+                        deal.getSellerCurrency(),
+                        deal.getBuyerCurrency(),
+                        new AmountPair(deal.getSoldAmount(), deal.getPurchasedAmount())
+                );
+
+                savedDeal.setStatus(DealStatus.COMPLETED);
+                savedDeal.setCompletedAt(LocalDateTime.now());
+                savedDeal.setStatusReason(dto.getResumeReason());
+                savedDeal.setPausedAt(null);
+            } catch (OptimisticLockException | DataIntegrityViolationException e) {
+                savedDeal.setStatus(DealStatus.FAILED);
+                savedDeal.setStatusReason("Execution failed on resume: " + e.getMessage());
+            }
+            savedDeal = dealRepository.save(savedDeal);
+        } else {
+            handleInsufficientBalance(savedDeal, originalStatus, sufficiency);
+            savedDeal = dealRepository.save(savedDeal);
+        }
+
+        return dealMapper.toReadDto(savedDeal);
     }
 
     @Override
     @Transactional
     public DealReadDto cancelDeal(Integer dealId, CancelDealDto dto) {
-        return null;
+        Deal deal = getEntityById(dealId);
+
+        if (deal.getStatus() == DealStatus.COMPLETED) {
+            throw new IllegalStateException(
+                    "Cannot cancel a completed deal");
+        }
+        if (deal.getStatus() == DealStatus.CANCELLED) {
+            throw new IllegalStateException(
+                    "Deal is already cancelled");
+        }
+
+        deal.setStatus(DealStatus.CANCELLED);
+        deal.setStatusReason(dto.getCancellationReason());
+
+        Deal savedDeal = dealRepository.save(deal);
+        return dealMapper.toReadDto(savedDeal);
     }
 
     @Override
@@ -126,24 +214,41 @@ public class DealServiceImpl implements DealService {
         dealRepository.deleteById(id);
     }
 
-    // Fetches the appropriate DayRate for the deal based on deal type and currencies.
     private DayRate fetchAndValidateDayRate(DealCreateDto dto) {
-        Currency baseCurrency;
-        Currency quoteCurrency;
+        return fetchDayRateForDealType(
+                dto.getDealType(),
+                dto.getSellerCurrency(),
+                dto.getBuyerCurrency()
+        );
+    }
 
-        if (dto.getDealType() == DealType.BUY) {
-            baseCurrency = dto.getSellerCurrency();   // Bank buying this
-            quoteCurrency = dto.getBuyerCurrency(); // Bank paying with this
-        } else {
-            baseCurrency = dto.getBuyerCurrency();  // Bank selling this
-            quoteCurrency = dto.getSellerCurrency();  // Customer paying with this
-        }
+    private DayRate fetchCurrentDayRate(Deal deal) {
+        return fetchDayRateForDealType(
+                deal.getDealType(),
+                deal.getSellerCurrency(),
+                deal.getBuyerCurrency()
+        );
+    }
+
+    private DayRate fetchDayRateForDealType(
+            DealType dealType,
+            Currency sellerCurrency,
+            Currency buyerCurrency) {
+
+        Currency baseCurrency = (dealType == DealType.BUY)
+                ? sellerCurrency
+                : buyerCurrency;
+        Currency quoteCurrency = (dealType == DealType.BUY)
+                ? buyerCurrency
+                : sellerCurrency;
 
         LocalDate today = LocalDate.now();
         return dayRateRepository
-                .findByBaseCurrencyAndQuoteCurrencyAndRateDate(baseCurrency, quoteCurrency, today)
+                .findByBaseCurrencyAndQuoteCurrencyAndRateDate(
+                        baseCurrency, quoteCurrency, today)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "No rate found for " + baseCurrency + "/" + quoteCurrency + " on " + today));
+                        "No rate found for " + baseCurrency + "/"
+                                + quoteCurrency + " on " + today));
     }
 
     // Selects buy or sell rate based on deal type.
@@ -185,21 +290,38 @@ public class DealServiceImpl implements DealService {
      * For BUY: client provides purchased amount, calculate sold amount.
      * For SELL: client provides sold amount, calculate purchased amount. */
     private AmountPair calculateAmounts(DealCreateDto dto, BigDecimal exchangeRate) {
-        BigDecimal purchasedAmount;
-        BigDecimal soldAmount;
-
         if (dto.getDealType() == DealType.BUY) {
-            purchasedAmount = dto.getPurchasedAmount(); // Base amount (provided)
-            soldAmount = purchasedAmount
-                    .multiply(exchangeRate)
-                    .setScale(4, RoundingMode.HALF_UP); // Quote amount (calculated)
+            return calculateAmountsFromPurchased(
+                    dto.getPurchasedAmount(), exchangeRate);
         } else {
-            soldAmount = dto.getSoldAmount(); // Base amount (provided)
-            purchasedAmount = soldAmount
-                    .multiply(exchangeRate)
-                    .setScale(4, RoundingMode.HALF_UP); // Quote amount (calculated)
+            return calculateAmountsFromSold(
+                    dto.getSoldAmount(), exchangeRate);
         }
+    }
 
+    private AmountPair recalculateAmounts(Deal deal, BigDecimal exchangeRate) {
+        if (deal.getDealType() == DealType.BUY) {
+            return calculateAmountsFromPurchased(
+                    deal.getPurchasedAmount(), exchangeRate);
+        } else {
+            return calculateAmountsFromSold(
+                    deal.getSoldAmount(), exchangeRate);
+        }
+    }
+
+    private AmountPair calculateAmountsFromPurchased(
+            BigDecimal purchasedAmount, BigDecimal exchangeRate) {
+        BigDecimal soldAmount = purchasedAmount
+                .multiply(exchangeRate)
+                .setScale(AMOUNT_SCALE, AMOUNT_ROUNDING);
+        return new AmountPair(soldAmount, purchasedAmount);
+    }
+
+    private AmountPair calculateAmountsFromSold(
+            BigDecimal soldAmount, BigDecimal exchangeRate) {
+        BigDecimal purchasedAmount = soldAmount
+                .multiply(exchangeRate)
+                .setScale(AMOUNT_SCALE, AMOUNT_ROUNDING);
         return new AmountPair(soldAmount, purchasedAmount);
     }
 
@@ -306,6 +428,57 @@ public class DealServiceImpl implements DealService {
                             .build();
                     return currencyBalanceRepository.save(newBalance);
                 });
+    }
+
+    private void validateResumableStatus(Deal deal) {
+        if (deal.getStatus() != DealStatus.PAUSED && deal.getStatus() != DealStatus.FAILED) {
+            throw new IllegalStateException("Only PAUSED or FAILED deals can be resumed");
+        }
+    }
+
+    private boolean validateDealPrerequisites(Deal deal) {
+        try {
+            User seller = fetchUser(deal.getSeller().getId(), "Seller");
+            User buyer = fetchUser(deal.getBuyer().getId(), "Buyer");
+            validateRoles(seller, buyer, deal.getDealType());
+
+            fetchBalance(deal.getSeller().getId(), deal.getSellerCurrency(), "Seller");
+            fetchBalance(deal.getBuyer().getId(), deal.getBuyerCurrency(), "Buyer");
+
+            return true;
+        } catch (EntityNotFoundException | IllegalArgumentException e) {
+            deal.setStatus(DealStatus.CANCELLED);
+            deal.setStatusReason("Validation failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean updateDealWithCurrentRate(Deal deal) {
+        try {
+            DayRate currentRate = fetchCurrentDayRate(deal);
+            BigDecimal exchangeRate = selectExchangeRate(currentRate, deal.getDealType());
+            AmountPair amounts = recalculateAmounts(deal, exchangeRate);
+
+            deal.setDayRate(currentRate);
+            deal.setExchangeRateUsed(exchangeRate);
+            deal.setSoldAmount(amounts.soldAmount());
+            deal.setPurchasedAmount(amounts.purchasedAmount());
+
+            return true;
+        } catch (EntityNotFoundException e) {
+            deal.setStatus(DealStatus.CANCELLED);
+            deal.setStatusReason("No day rate available for resume");
+            return false;
+        }
+    }
+
+    private void handleInsufficientBalance(Deal deal, DealStatus originalStatus, BalanceSufficiency sufficiency) {
+        if (originalStatus == DealStatus.FAILED) {
+            deal.setStatusReason("Still insufficient balance after resume attempt");
+        } else {
+            deal.setStatus(DealStatus.PAUSED);
+            deal.setStatusReason(sufficiency.reason());
+        }
     }
 
     private record AmountPair(BigDecimal soldAmount, BigDecimal purchasedAmount) {}

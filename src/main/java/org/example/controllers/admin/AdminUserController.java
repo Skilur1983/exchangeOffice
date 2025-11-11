@@ -1,4 +1,4 @@
-package org.example.controllers;
+package org.example.controllers.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import java.net.URI;
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 @Validated
-public class AdminController {
+public class AdminUserController {
 
     private final UserService userService;
     private final PageableBuilder pageableBuilder;

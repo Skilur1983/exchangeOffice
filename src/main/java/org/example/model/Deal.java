@@ -95,9 +95,6 @@ public class Deal {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (status == null) {
-            status = DealStatus.PENDING;
-        }
     }
 
     @PreUpdate
