@@ -1,6 +1,5 @@
 package org.example.config;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -18,7 +17,7 @@ public class PaginationProperties {
     @Value("${pageSize}")
     private int pageSize;
 
-    @Value("${pageSize}")
+    @Value("${maxSize}")
     private int maxSize;
 
     @Value("${sortBy}")
