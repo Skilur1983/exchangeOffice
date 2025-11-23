@@ -1,26 +1,24 @@
-package org.example.repository.specification.balance;
+package org.example.repository.specification;
 
 import lombok.extern.slf4j.Slf4j;
-import org.example.model.CurrencyBalance;
-import org.example.repository.specification.SpecificationProvider;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
 @Slf4j
-@Component
-public class BetweenAmountBalanceSpecification implements SpecificationProvider<CurrencyBalance> {
+public abstract class AbstractBetweenAmountSpecification<T> implements SpecificationProvider<T> {
 
-    private static final String FILTER_KEY = "amount";
-    private static final String FIELD_NAME = "amount";
+    protected abstract String getFieldName();
 
     @Override
-    public Specification<CurrencyBalance> getSpecification(String[] params) {
+    public abstract String getFilterKey();
+
+    @Override
+    public Specification<T> getSpecification(String[] params) {
         if (params == null || params.length < 2 ||
                 params[0] == null || params[0].isBlank() ||
                 params[1] == null || params[1].isBlank()) {
-            log.debug("Missing or invalid parameters for '{}'. Returning no-op specification.", FILTER_KEY);
+            log.debug("Missing or invalid parameters for '{}'. Returning no-op specification.", getFilterKey());
             return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
 
@@ -29,8 +27,8 @@ public class BetweenAmountBalanceSpecification implements SpecificationProvider<
             BigDecimal max = new BigDecimal(params[1].trim());
 
             if (max.compareTo(min) < 0) {
-                log.warn("Max amount is smaller than min amount for '{}': min='{}', max='{}'. Swapping values.",
-                        FILTER_KEY, min, max);
+                log.warn("Max is smaller than min for '{}': min='{}', max='{}'. Swapping values.",
+                        getFilterKey(), min, max);
                 BigDecimal temp = min;
                 min = max;
                 max = temp;
@@ -40,17 +38,12 @@ public class BetweenAmountBalanceSpecification implements SpecificationProvider<
             BigDecimal finalMax = max;
 
             return (root, query, criteriaBuilder) ->
-                    criteriaBuilder.between(root.get(FIELD_NAME), finalMin, finalMax);
+                    criteriaBuilder.between(root.get(getFieldName()), finalMin, finalMax);
 
         } catch (NumberFormatException e) {
             log.warn("Invalid number format for '{}': '{}', '{}'. Expected decimal numbers.",
-                    FILTER_KEY, params[0], params[1]);
+                    getFilterKey(), params[0], params[1]);
             return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
-    }
-
-    @Override
-    public String getFilterKey() {
-        return FILTER_KEY;
     }
 }

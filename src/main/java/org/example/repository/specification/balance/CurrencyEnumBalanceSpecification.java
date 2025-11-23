@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class CurrencyBalanceSpecification implements SpecificationProvider<CurrencyBalance> {
+public class CurrencyEnumBalanceSpecification implements SpecificationProvider<CurrencyBalance> {
 
     private static final String FILTER_KEY = "currency";
     private static final String FIELD_NAME = "currency";
