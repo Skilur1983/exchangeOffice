@@ -13,11 +13,14 @@ import org.example.repository.CurrencyBalanceRepository;
 import org.example.repository.DayRateRepository;
 import org.example.repository.DealRepository;
 import org.example.repository.UserRepository;
+import org.example.repository.specification.SpecificationManager;
 import org.example.service.DealService;
+import org.example.utils.PageableBuilder;
 import org.example.utils.mapper.DealMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +41,10 @@ public class DealServiceImpl implements DealService {
     private final UserRepository userRepository;
     private final DayRateRepository dayRateRepository;
     private final CurrencyBalanceRepository currencyBalanceRepository;
+    private final PageableBuilder pageableBuilder;
+    private final SpecificationManager<Deal> specificationManager;
 
+    private static final String SPLIT_TO_ARRAY = ",";
     private static final int AMOUNT_SCALE = 4;
     private static final RoundingMode AMOUNT_ROUNDING = RoundingMode.HALF_UP;
 
@@ -57,11 +65,20 @@ public class DealServiceImpl implements DealService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageDto<DealReadDto> getAll(Pageable pageable) {
-        Page<Deal> dealPage = dealRepository.findAll(pageable);
-        List<DealReadDto> dealReadDtos = dealPage.stream()
+    public PageDto<DealReadDto> getAll(Map<String, String> params) {
+        Pageable pageRequest = pageableBuilder.buildFromFilters(params);
+        Specification<Deal> specification = null;
+
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            Specification<Deal> sp = specificationManager.get(entry.getKey(), entry.getValue().split(SPLIT_TO_ARRAY));
+            specification = specification == null ? Specification.where(sp) : specification.and(sp);
+        }
+
+        Page<Deal> dealPage = dealRepository.findAll(specification, pageRequest);
+
+        List<DealReadDto> dealReadDtos = dealPage.getContent().stream()
                 .map(dealMapper::toReadDto)
-                .toList();
+                .collect(Collectors.toList());
 
         return PageDto.<DealReadDto>builder()
                 .content(dealReadDtos)

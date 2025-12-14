@@ -9,15 +9,20 @@ import org.example.model.dto.dayrate.DayRateCreateDto;
 import org.example.model.dto.dayrate.DayRateReadDto;
 import org.example.model.dto.dayrate.DayRateUpdateDto;
 import org.example.repository.DayRateRepository;
+import org.example.repository.specification.SpecificationManager;
 import org.example.service.DayRateService;
+import org.example.utils.PageableBuilder;
 import org.example.utils.mapper.DayRateMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +30,10 @@ public class DayRateServiceImpl implements DayRateService {
 
     private final DayRateRepository dayRateRepository;
     private final DayRateMapper dayRateMapper;
+    private final PageableBuilder pageableBuilder;
+    private final SpecificationManager<DayRate> specificationManager;
+
+    private static final String SPLIT_TO_ARRAY = ",";
 
     @Override
     @Transactional(readOnly = true)
@@ -55,18 +64,27 @@ public class DayRateServiceImpl implements DayRateService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageDto<DayRateReadDto> getAll(Pageable pageable) {
-        Page<DayRate> dayRatePage = dayRateRepository.findAll(pageable);
-        List<DayRateReadDto> dayRateReadDtos = dayRatePage.stream()
+    public PageDto<DayRateReadDto> getAll(Map<String, String> params) {
+        Pageable pageRequest = pageableBuilder.buildFromFilters(params);
+        Specification<DayRate> specification = null;
+
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            Specification<DayRate> sp = specificationManager.get(entry.getKey(), entry.getValue().split(SPLIT_TO_ARRAY));
+            specification = specification == null ? Specification.where(sp) : specification.and(sp);
+        }
+
+        Page<DayRate> dayRatePagePage = dayRateRepository.findAll(specification, pageRequest);
+
+        List<DayRateReadDto> rateReadDtos = dayRatePagePage.getContent().stream()
                 .map(dayRateMapper::toReadDto)
-                .toList();
+                .collect(Collectors.toList());
 
         return PageDto.<DayRateReadDto>builder()
-                .content(dayRateReadDtos)
-                .pageNumber(dayRatePage.getNumber())
-                .pageSize(dayRatePage.getSize())
-                .totalElements(dayRatePage.getTotalElements())
-                .totalPages(dayRatePage.getTotalPages())
+                .content(rateReadDtos)
+                .pageNumber(dayRatePagePage.getNumber())
+                .pageSize(dayRatePagePage.getSize())
+                .totalElements(dayRatePagePage.getTotalElements())
+                .totalPages(dayRatePagePage.getTotalPages())
                 .build();
     }
 

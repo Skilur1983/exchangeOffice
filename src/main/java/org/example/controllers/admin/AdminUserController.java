@@ -2,20 +2,23 @@ package org.example.controllers.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.model.dto.PageDto;
 import org.example.model.dto.user.UserCreateDto;
 import org.example.model.dto.user.UserReadDto;
 import org.example.model.dto.user.UserUpdateDto;
 import org.example.service.UserService;
-import org.example.utils.PageableBuilder;
-import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/admin/users")
 @PreAuthorize("hasRole('ADMIN')")
@@ -24,50 +27,45 @@ import java.net.URI;
 public class AdminUserController {
 
     private final UserService userService;
-    private final PageableBuilder pageableBuilder;
 
     @GetMapping
-    public PageDto<UserReadDto> getAll(
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) String sortBy,
-            @RequestParam(required = false) String sortOrder) {
+    public PageDto<UserReadDto> getAll(@RequestParam(required = false) Map<String, String> allParams) {
+        log.debug("GET /admin/users - Params: {}", allParams);
 
-        Pageable pageable = pageableBuilder.build(page, size, sortBy, sortOrder);
-        return userService.getAll(pageable);
+        return userService.getAll(allParams);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserReadDto> getById(@PathVariable int id) {
+    public ResponseEntity<UserReadDto> getById(@PathVariable Integer id) {
         UserReadDto user = userService.getById(id);
         return ResponseEntity.ok(user);
     }
 
     @PostMapping("/create")
     public ResponseEntity<UserReadDto> create(@Valid @RequestBody UserCreateDto userCreateDto) {
-        userService.create(userCreateDto);
-        UserReadDto createdUser = userService.getByUsername(userCreateDto.getUsername());
+        UserReadDto createdUser = userService.create(userCreateDto);
 
-        URI location = URI.create("/admin/users/" + createdUser.getId());
-        return ResponseEntity
-                .created(location)
-                .body(createdUser);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(createdUser.getId())
+                .toUri();
+        return ResponseEntity.created(location).body(createdUser);
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<UserReadDto> update(@PathVariable int id,
+    public ResponseEntity<UserReadDto> update(@PathVariable Integer id,
                                                       @Valid @RequestBody UserUpdateDto userUpdateDto) {
-        userService.update(id, userUpdateDto);
-        UserReadDto updatedUser = userService.getById(id);
+        UserReadDto updatedUser = userService.update(id, userUpdateDto);
 
-        URI location = URI.create("/admin/users/" + updatedUser.getId());
-        return ResponseEntity
-                .created(location)
-                .body(updatedUser);
+        return ResponseEntity.ok(updatedUser);
     }
 
-    @DeleteMapping("delete/{id}")
-    public void delete(@PathVariable int id) {
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        log.info("DELETE /admin/users/{}", id);
         userService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

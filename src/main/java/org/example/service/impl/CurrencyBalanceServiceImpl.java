@@ -12,15 +12,20 @@ import org.example.model.dto.currencybalance.CurrencyBalanceCreateDto;
 import org.example.model.dto.currencybalance.CurrencyBalanceReadDto;
 import org.example.repository.CurrencyBalanceRepository;
 import org.example.repository.UserRepository;
+import org.example.repository.specification.SpecificationManager;
 import org.example.service.CurrencyBalanceService;
+import org.example.utils.PageableBuilder;
 import org.example.utils.mapper.CurrencyBalanceMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +34,10 @@ public class CurrencyBalanceServiceImpl implements CurrencyBalanceService {
     private final CurrencyBalanceRepository currencyBalanceRepository;
     private final UserRepository userRepository;
     private final CurrencyBalanceMapper currencyBalanceMapper;
+    private final PageableBuilder pageableBuilder;
+    private final SpecificationManager<CurrencyBalance> specificationManager;
+
+    private static final String SPLIT_TO_ARRAY = ",";
 
     @Override
     @Transactional(readOnly = true)
@@ -57,11 +66,20 @@ public class CurrencyBalanceServiceImpl implements CurrencyBalanceService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageDto<CurrencyBalanceReadDto> getAll(Pageable pageable) {
-        Page<CurrencyBalance> currencyBalancePage = currencyBalanceRepository.findAll(pageable);
-        List<CurrencyBalanceReadDto> currencyBalanceReadDtos = currencyBalancePage.stream()
+    public PageDto<CurrencyBalanceReadDto> getAll(Map<String, String> params) {
+        Pageable pageRequest = pageableBuilder.buildFromFilters(params);
+        Specification<CurrencyBalance> specification = null;
+
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            Specification<CurrencyBalance> sp = specificationManager.get(entry.getKey(), entry.getValue().split(SPLIT_TO_ARRAY));
+            specification = specification == null ? Specification.where(sp) : specification.and(sp);
+        }
+
+        Page<CurrencyBalance> currencyBalancePage = currencyBalanceRepository.findAll(specification, pageRequest);
+
+        List<CurrencyBalanceReadDto> currencyBalanceReadDtos = currencyBalancePage.getContent().stream()
                 .map(currencyBalanceMapper::toReadDto)
-                .toList();
+                .collect(Collectors.toList());
 
         return PageDto.<CurrencyBalanceReadDto>builder()
                 .content(currencyBalanceReadDtos)
