@@ -1,2 +1,5 @@
 DROP TABLE IF EXISTS office.users CASCADE;
+DROP TABLE IF EXISTS office.currency_balances CASCADE;
+DROP TABLE IF EXISTS office.day_rates CASCADE;
+DROP TABLE IF EXISTS office.deals CASCADE;
 DROP EXTENSION IF EXISTS pgcrypto;

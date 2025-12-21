@@ -8,4 +8,10 @@ VALUES
 INSERT INTO office.users (username, password, role)
 VALUES
     ('SarSmi', crypt('customer123', gen_salt('bf')), 'CUSTOMER'),
-    ('TomBro', crypt('customer123', gen_salt('bf')), 'CUSTOMER');
+    ('TomBro', crypt('customer123', gen_salt('bf')), 'CUSTOMER'),
+    ('JohDoe', crypt('customer123', gen_salt('bf')), 'CUSTOMER'),
+    ('MarJon', crypt('customer123', gen_salt('bf')), 'CUSTOMER'),
+    ('AnnWil', crypt('customer123', gen_salt('bf')), 'CUSTOMER'),
+    ('PetBak', crypt('customer123', gen_salt('bf')), 'CUSTOMER'),
+    ('LisChe', crypt('customer123', gen_salt('bf')), 'CUSTOMER'),
+    ('DavMil', crypt('customer123', gen_salt('bf')), 'CUSTOMER');
