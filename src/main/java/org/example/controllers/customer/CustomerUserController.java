@@ -1,5 +1,7 @@
 package org.example.controllers.customer;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasRole('CUSTOMER')")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Customer - Profile", description = "Customer endpoints for profile management")
+@SecurityRequirement(name = "Bearer Authentication")
 public class CustomerUserController {
 
     private final UserService userService;

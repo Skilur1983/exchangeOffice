@@ -1,5 +1,12 @@
 package org.example.config;
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import io.swagger.v3.oas.annotations.servers.Server;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +30,39 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@OpenAPIDefinition(
+        info = @Info(
+                title = "Exchange Office API",
+                version = "1.0.0",
+                description = """
+                        REST API for Exchange Office application.
+                                                
+                        This API provides endpoints for:
+                        - User authentication and authorization
+                        - Currency balance management
+                        - Exchange rate management
+                        - Deal/transaction processing
+                                                
+                        **Authentication:**
+                        Most endpoints require JWT authentication. Use the /auth/login endpoint to obtain a token,
+                        then include it in the Authorization header as: Bearer {token}
+                                                
+                        **Roles:**
+                        - ADMIN: Full access to all endpoints
+                        - CUSTOMER: Limited access to customer-specific endpoints
+                        """
+        ),
+        security = @SecurityRequirement(name = "bearerAuth"),
+        servers = @Server(url = "http://localhost:8082", description = "Local server")
+)
+@SecurityScheme(
+        name = "Bearer Authentication",
+        description = "JWT authentication token obtained from /auth/login endpoint",
+        scheme = "bearer",
+        type = SecuritySchemeType.HTTP,
+        bearerFormat = "JWT",
+        in = SecuritySchemeIn.HEADER
+)
 public class SecurityConfig implements WebMvcConfigurer {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
@@ -38,7 +78,14 @@ public class SecurityConfig implements WebMvcConfigurer {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/api-docs/**"
+                        ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/customer/**").hasRole("CUSTOMER")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

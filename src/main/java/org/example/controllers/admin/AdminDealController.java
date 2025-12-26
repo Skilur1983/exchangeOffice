@@ -1,5 +1,7 @@
 package org.example.controllers.admin;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,8 @@ import java.util.Map;
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Admin - Deals", description = "Admin endpoints for managing currency exchange deals")
+@SecurityRequirement(name = "Bearer Authentication")
 public class AdminDealController {
 
     private final DealService dealService;

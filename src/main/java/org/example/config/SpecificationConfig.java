@@ -14,6 +14,7 @@ import java.util.List;
 @Configuration
 public class SpecificationConfig {
 
+    // Not sure if I need it
     @Bean
     public SpecificationManager<User> userSpecificationManager(
             List<SpecificationProvider<User>> providers) {

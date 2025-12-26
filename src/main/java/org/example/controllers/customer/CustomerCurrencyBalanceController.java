@@ -1,5 +1,7 @@
 package org.example.controllers.customer;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.model.Currency;
@@ -23,6 +25,8 @@ import java.util.List;
 @PreAuthorize("hasRole('CUSTOMER')")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Customer - Balances", description = "Customer endpoints for viewing currency balances")
+@SecurityRequirement(name = "Bearer Authentication")
 public class CustomerCurrencyBalanceController {
 
     private final CurrencyBalanceService currencyBalanceService;

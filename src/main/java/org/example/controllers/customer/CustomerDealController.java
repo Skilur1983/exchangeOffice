@@ -1,5 +1,7 @@
 package org.example.controllers.customer;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,8 @@ import java.util.Map;
 @PreAuthorize("hasRole('CUSTOMER')")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Customer - Deals", description = "Customer endpoints for managing deals")
+@SecurityRequirement(name = "Bearer Authentication")
 public class CustomerDealController {
 
     private final DealService dealService;
