@@ -12,6 +12,12 @@ import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.example.config.security.JwtAuthenticationFilter;
 import org.example.config.security.SecurityConstants;
+import org.example.model.CurrencyBalance;
+import org.example.model.DayRate;
+import org.example.model.Deal;
+import org.example.model.User;
+import org.example.repository.specification.SpecificationManager;
+import org.example.repository.specification.SpecificationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +32,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -110,5 +118,29 @@ public class SecurityConfig implements WebMvcConfigurer {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(SecurityConstants.BCRYPT_STRENGTH);
+    }
+
+    @Bean
+    public SpecificationManager<User> userSpecificationManager(
+            List<SpecificationProvider<User>> providers) {
+        return new SpecificationManager<>(providers);
+    }
+
+    @Bean
+    public SpecificationManager<Deal> dealSpecificationManager(
+            List<SpecificationProvider<Deal>> providers) {
+        return new SpecificationManager<>(providers);
+    }
+
+    @Bean
+    public SpecificationManager<DayRate> dayRateSpecificationManager(
+            List<SpecificationProvider<DayRate>> providers) {
+        return new SpecificationManager<>(providers);
+    }
+
+    @Bean
+    public SpecificationManager<CurrencyBalance> currencyBalanceSpecificationManager(
+            List<SpecificationProvider<CurrencyBalance>> providers) {
+        return new SpecificationManager<>(providers);
     }
 }

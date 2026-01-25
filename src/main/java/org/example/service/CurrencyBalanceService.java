@@ -25,5 +25,4 @@ public interface CurrencyBalanceService {
     void deleteById(Integer id);
 
     CurrencyBalance getEntityById(Integer id);
-    CurrencyBalance getEntityByUserAndCurrency(Integer userId, Currency currency);
 }

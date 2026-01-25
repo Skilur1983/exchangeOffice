@@ -24,18 +24,6 @@ public class CurrencyBalanceMapper {
                 .build();
     }
 
-    public CurrencyBalanceWithUserReadDto toCurrencyBalanceWithUserReadDto(CurrencyBalance currencyBalance, UserReadDto userReadDto) {
-        return CurrencyBalanceWithUserReadDto.builder()
-                .id(currencyBalance.getId())
-                .currency(currencyBalance.getCurrency())
-                .amount(currencyBalance.getAmount())
-                .userReadDto(userReadDto)
-                .createdAt(currencyBalance.getCreatedAt())
-                .updatedAt(currencyBalance.getUpdatedAt())
-                .build();
-
-    }
-
     public CurrencyBalance toEntity(CurrencyBalanceCreateDto currencyBalanceCreateDto, User user) {
         return CurrencyBalance.builder()
                 .currency(currencyBalanceCreateDto.getCurrency())

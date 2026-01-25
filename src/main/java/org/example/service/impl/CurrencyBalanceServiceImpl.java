@@ -149,13 +149,6 @@ public class CurrencyBalanceServiceImpl implements CurrencyBalanceService {
                 .orElseThrow(() -> new EntityNotFoundException("Balance with ID " + id + " not found"));
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public CurrencyBalance getEntityByUserAndCurrency(Integer userId, Currency currency) {
-        return currencyBalanceRepository.findByUserIdAndCurrency(userId, currency)
-                .orElseThrow(() -> new EntityNotFoundException("Balance not found for user ID " + userId + " and currency " + currency));
-    }
-
     private CurrencyBalance createNewBalance(Integer userId, Currency currency) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User with ID " + userId + " not found"));
