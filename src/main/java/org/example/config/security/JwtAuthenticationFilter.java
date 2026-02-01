@@ -10,6 +10,9 @@ import org.example.exceptions.ExpiredJwtTokenException;
 import org.example.exceptions.InvalidJwtTokenException;
 import org.example.exceptions.JwtAuthenticationException;
 import org.example.exceptions.MalformedJwtTokenException;
+import org.example.model.RoleName;
+import org.example.model.User;
+import org.example.model.UserPrincipal;
 import org.example.service.security.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -58,12 +61,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (jwtService.isTokenValid(token, username)) {
 
                     String role = jwtService.extractRole(token);
+                    Integer userId = jwtService.extractUserId(token);
+
+                    User user = new User();
+                    user.setId(userId);
+                    user.setUsername(username);
+                    user.setRole(RoleName.valueOf(role.replace("ROLE_", "")));
+
+                    UserPrincipal userPrincipal = new UserPrincipal(user);
 
                     List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
 
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
-                                    username,
+                                    userPrincipal,
                                     null,
                                     authorities
                             );

@@ -316,6 +316,17 @@ public class ProjectExceptionHandler {
         );
     }
 
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<?> handleNullPointerException(NullPointerException ex,
+                                                        HttpServletRequest request) {
+        log.error("NullPointerException at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        return buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred",
+                request.getRequestURI()
+        );
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGenericException(Exception ex, HttpServletRequest request) {
         log.error("Unexpected error at {}: ", request.getRequestURI(), ex);

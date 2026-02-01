@@ -59,8 +59,9 @@ public class AdminDealController {
                     **Filtering Options:**
                     - status: Filter by deal status
                     - dealType: Filter by type (BUY, SELL)
-                    - sellerId: Filter deals by seller
-                    - buyerId: Filter deals by buyer
+                    - userId: Filter deals where user is seller OR buyer
+                    - sellerId: Filter deals by seller only
+                    - buyerId: Filter deals by buyer only
                     - sellerCurrency/buyerCurrency: Filter by currencies
                     - amountBetween, date ranges, etc.
                     
@@ -69,6 +70,7 @@ public class AdminDealController {
             parameters = {
                     @Parameter(name = "status", description = "Filter by status", example = "COMPLETED"),
                     @Parameter(name = "dealType", description = "Filter by type", example = "BUY"),
+                    @Parameter(name = "userId", description = "Filter deals where user is seller OR buyer", example = "3"),
                     @Parameter(name = "sellerId", description = "Filter by seller ID", example = "3"),
                     @Parameter(name = "buyerId", description = "Filter by buyer ID", example = "1"),
                     @Parameter(name = "page", description = "Page number", example = "0"),

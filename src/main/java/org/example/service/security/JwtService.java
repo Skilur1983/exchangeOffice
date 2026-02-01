@@ -7,6 +7,7 @@ import org.example.config.security.SecurityConstants;
 import org.example.exceptions.ExpiredJwtTokenException;
 import org.example.exceptions.InvalidJwtTokenException;
 import org.example.exceptions.MalformedJwtTokenException;
+import org.example.model.UserPrincipal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -43,9 +44,20 @@ public class JwtService {
                     .map(GrantedAuthority::getAuthority)
                     .orElse("ROLE_USER");
 
+            Integer userId = null;
+            if (userDetails instanceof UserPrincipal) {
+                userId = ((UserPrincipal) userDetails).getUser().getId();
+            }
+
+            Claims claims = Jwts.claims();
+            claims.put("role", role);
+            if (userId != null) {
+                claims.put("userId", userId);
+            }
+
             String token = Jwts.builder()
+                    .setClaims(claims)
                     .setSubject(userDetails.getUsername())
-                    .claim("role", role)
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                     .signWith(key, SignatureAlgorithm.HS256)
@@ -66,6 +78,17 @@ public class JwtService {
             return username;
         } catch (Exception e) {
             log.warn("Failed to extract username from token: {}", e.getMessage());
+            throw handleJwtException(e);
+        }
+    }
+
+    public Integer extractUserId(String token) {
+        try {
+            Integer userId = (Integer) parseClaims(token).get("userId");
+            log.debug("Extracted userId from token: {}", userId);
+            return userId;
+        } catch (Exception e) {
+            log.warn("Failed to extract userId from token: {}", e.getMessage());
             throw handleJwtException(e);
         }
     }

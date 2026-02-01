@@ -52,4 +52,18 @@ public class DealCreateDto {
         if (sellerCurrency == null || buyerCurrency == null) return true;
         return !sellerCurrency.equals(buyerCurrency);
     }
+
+    @AssertTrue(message = "BUY deal requires purchasedAmount (the amount customer sells to the office)")
+    public boolean isPurchasedAmountProvidedForBuy() {
+        if (dealType == null) return true;
+        if (dealType != DealType.BUY) return true;
+        return purchasedAmount != null;
+    }
+
+    @AssertTrue(message = "SELL deal requires soldAmount (the amount the office sells to the customer)")
+    public boolean isSoldAmountProvidedForSell() {
+        if (dealType == null) return true;
+        if (dealType != DealType.SELL) return true;
+        return soldAmount != null;
+    }
 }
