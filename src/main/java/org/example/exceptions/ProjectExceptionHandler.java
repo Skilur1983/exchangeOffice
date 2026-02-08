@@ -305,6 +305,17 @@ public class ProjectExceptionHandler {
         );
     }
 
+    @ExceptionHandler(FilterIllegalArgumentException.class)
+    public ResponseEntity<?> handleFilterIllegalArgument(FilterIllegalArgumentException ex,
+                                                         HttpServletRequest request) {
+        log.warn("Invalid filter at {}: {}", request.getRequestURI(), ex.getMessage());
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<?> handleIllegalStateException(IllegalStateException ex,
                                                          HttpServletRequest request) {

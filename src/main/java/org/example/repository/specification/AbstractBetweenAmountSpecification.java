@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 
 @Slf4j
 public abstract class AbstractBetweenAmountSpecification<T> implements SpecificationProvider<T> {
@@ -15,15 +16,22 @@ public abstract class AbstractBetweenAmountSpecification<T> implements Specifica
 
     @Override
     public Specification<T> getSpecification(String[] params) {
-        if (params == null || params.length < 2 ||
-                params[0] == null || params[0].isBlank() ||
-                params[1] == null || params[1].isBlank()) {
+        if (params == null || params.length == 0 ||
+                params[0] == null || params[0].isBlank()) {
             log.debug("Missing or invalid parameters for '{}'. Returning no-op specification.", getFilterKey());
             return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
 
         try {
             BigDecimal min = new BigDecimal(params[0].trim());
+
+            if (params.length == 1 || params[1] == null || params[1].isBlank()) {
+                log.debug("Only min provided for '{}': min='{}'. Filtering >= min.", getFilterKey(), min);
+                BigDecimal finalMin1 = min;
+                return (root, query, criteriaBuilder) ->
+                        criteriaBuilder.greaterThanOrEqualTo(root.get(getFieldName()), finalMin1);
+            }
+
             BigDecimal max = new BigDecimal(params[1].trim());
 
             if (max.compareTo(min) < 0) {
@@ -37,12 +45,15 @@ public abstract class AbstractBetweenAmountSpecification<T> implements Specifica
             BigDecimal finalMin = min;
             BigDecimal finalMax = max;
 
+            log.debug("Both min and max provided for '{}': min='{}', max='{}'. Filtering BETWEEN.",
+                    getFilterKey(), finalMin, finalMax);
+
             return (root, query, criteriaBuilder) ->
                     criteriaBuilder.between(root.get(getFieldName()), finalMin, finalMax);
 
         } catch (NumberFormatException e) {
-            log.warn("Invalid number format for '{}': '{}', '{}'. Expected decimal numbers.",
-                    getFilterKey(), params[0], params[1]);
+            log.warn("Invalid number format for '{}': params={}. Expected decimal numbers.",
+                    getFilterKey(), Arrays.toString(params));
             return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
     }
