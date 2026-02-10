@@ -17,10 +17,17 @@ public class UsernameSpecification implements SpecificationProvider<User> {
         }
 
         String username = params[0].trim();
+
+        String escapedUsername = username
+                .replace("\\", "\\\\")
+                .replace("_", "\\_")
+                .replace("%", "\\%");
+
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.like(
                         criteriaBuilder.lower(root.get(FILTER_KEY)),
-                        "%" + username.toLowerCase() + "%"
+                        "%" + escapedUsername.toLowerCase() + "%",
+                        '\\'
                 );
     }
 
