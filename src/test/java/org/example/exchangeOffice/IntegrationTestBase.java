@@ -1,4 +1,4 @@
-package org.example.exchangeOffice.security;
+package org.example.exchangeOffice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "/db/migration/create_tables.sql",
         "/db/migration/insert_fixtures.sql"
 })
-public abstract class SecurityTestBase {
+public abstract class IntegrationTestBase {
 
     @Autowired
     protected MockMvc mockMvc;
@@ -40,12 +40,20 @@ public abstract class SecurityTestBase {
         return getTokenForUser("admin_second", "admin123password");
     }
 
+    protected String getThirdAdminToken() throws Exception {
+        return getTokenForUser("admin_third", "admin123password");
+    }
+
     protected String getCustomerToken() throws Exception {
         return getTokenForUser("SarSmi", "customer123");
     }
 
     protected String getSecondCustomerToken() throws Exception {
         return getTokenForUser("TomBro", "customer123");
+    }
+
+    protected String getThirdCustomerToken() throws Exception {
+        return getTokenForUser("JohDoe", "customer123");
     }
 
     protected String getTokenForUser(String username, String password) throws Exception {
@@ -68,5 +76,18 @@ public abstract class SecurityTestBase {
 
     protected String bearerToken(String token) {
         return "Bearer " + token;
+    }
+
+    protected String toJson(Object obj) throws Exception {
+        return objectMapper.writeValueAsString(obj);
+    }
+
+    protected <T> T fromJson(String json, Class<T> clazz) throws Exception {
+        return objectMapper.readValue(json, clazz);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected Map<String, Object> fromJsonToMap(String json) throws Exception {
+        return objectMapper.readValue(json, Map.class);
     }
 }

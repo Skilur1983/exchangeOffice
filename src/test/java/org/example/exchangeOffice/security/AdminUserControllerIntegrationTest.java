@@ -1,5 +1,6 @@
 package org.example.exchangeOffice.security;
 
+import org.example.exchangeOffice.IntegrationTestBase;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
@@ -8,7 +9,7 @@ import java.util.Map;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-public class AdminUserControllerSecurityTest extends SecurityTestBase {
+public class AdminUserControllerIntegrationTest extends IntegrationTestBase {
 
     private static final String BASE_URL = "/admin/users";
 

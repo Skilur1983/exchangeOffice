@@ -1,5 +1,6 @@
 package org.example.exchangeOffice.security;
 
+import org.example.exchangeOffice.IntegrationTestBase;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
@@ -9,7 +10,7 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-public class AuthControllerSecurityTest extends SecurityTestBase {
+public class AuthControllerIntegrationTest extends IntegrationTestBase {
 
     @Test
     void login_WithValidAdminCredentials_Returns200WithToken() throws Exception {
