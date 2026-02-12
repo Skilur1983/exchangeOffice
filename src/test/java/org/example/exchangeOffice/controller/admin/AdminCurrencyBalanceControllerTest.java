@@ -104,14 +104,14 @@ public class AdminCurrencyBalanceControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    void getBalanceById_NonExistentBalance_Returns200EmptyArray() throws Exception {
+    void getBalanceById_NonExistentBalance_Returns404() throws Exception {
         String token = getAdminToken();
 
         mockMvc.perform(get(BASE_URL + "/9999")
                         .header("Authorization", bearerToken(token)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(0)));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Currency Balance with ID: 9999 not found"));
     }
 
     @Test
@@ -149,14 +149,14 @@ public class AdminCurrencyBalanceControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    void getBalancesByUserId_NonExistentUser_Returns404() throws Exception {
+    void getBalancesByUserId_NonExistentUser_Returns200EmptyArray() throws Exception {
         String token = getAdminToken();
 
         mockMvc.perform(get(BASE_URL + "/user/9999")
                         .header("Authorization", bearerToken(token)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("Currency Balance"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test
@@ -552,8 +552,8 @@ public class AdminCurrencyBalanceControllerTest extends IntegrationTestBase {
         String token = getAdminToken();
 
         Map<String, Object> newBalance = Map.of(
-                "userId", 2,
-                "currency", "GBP",
+                "userId", 11,
+                "currency", "EUR",
                 "amount", 1000.00
         );
 
@@ -568,8 +568,8 @@ public class AdminCurrencyBalanceControllerTest extends IntegrationTestBase {
         int balanceId = (Integer) fromJsonToMap(createResponse).get("id");
 
         Map<String, Object> deposit = Map.of(
-                "userId", 2,
-                "currency", "GBP",
+                "userId", 11,
+                "currency", "EUR",
                 "amount", 500.00
         );
 
@@ -581,8 +581,8 @@ public class AdminCurrencyBalanceControllerTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.amount").value(1500.0));
 
         Map<String, Object> withdrawal = Map.of(
-                "userId", 2,
-                "currency", "GBP",
+                "userId", 11,
+                "currency", "EUR",
                 "amount", 1500.00
         );
 
