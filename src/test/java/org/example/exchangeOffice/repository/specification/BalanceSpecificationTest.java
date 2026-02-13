@@ -155,7 +155,7 @@ public class BalanceSpecificationTest {
         assertThat(results).allMatch(b -> b.getCurrency() == Currency.UAH);
         assertThat(results)
                 .extracting(b -> b.getUser().getId())
-                .contains(1, 4, 5, 7, 8, 10);
+                .contains(1, 4, 7, 8, 10);
     }
 
     @Test

@@ -22,7 +22,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -195,8 +194,8 @@ public class ProjectExceptionHandler {
         );
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<?> handleAccessDenied(AccessDeniedException ex,
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<?> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex,
                                                 HttpServletRequest request) {
         log.warn("Access denied at {}: {}", request.getRequestURI(), ex.getMessage());
         return buildErrorResponse(

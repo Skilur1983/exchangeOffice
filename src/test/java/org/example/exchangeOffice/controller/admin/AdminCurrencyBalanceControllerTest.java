@@ -23,7 +23,7 @@ public class AdminCurrencyBalanceControllerTest extends IntegrationTestBase {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.totalElements").value(19))
+                .andExpect(jsonPath("$.totalElements").value(18))
                 .andExpect(jsonPath("$.pageNumber").value(0));
     }
 
@@ -39,7 +39,7 @@ public class AdminCurrencyBalanceControllerTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.content", hasSize(10)))
                 .andExpect(jsonPath("$.pageNumber").value(0))
                 .andExpect(jsonPath("$.pageSize").value(10))
-                .andExpect(jsonPath("$.totalElements").value(19))
+                .andExpect(jsonPath("$.totalElements").value(18))
                 .andExpect(jsonPath("$.totalPages").value(2));
     }
 

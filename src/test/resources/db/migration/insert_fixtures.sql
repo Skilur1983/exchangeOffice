@@ -61,8 +61,7 @@ VALUES
 
 INSERT INTO office_test.currency_balances (user_id, currency, amount, version, created_at, updated_at)
 VALUES
-    (5, 'USD', 1000.00, 0, NOW(), NOW()),
-    (5, 'UAH', 50000.00, 0, NOW(), NOW());
+    (5, 'USD', 1000.00, 0, NOW(), NOW());
 
 INSERT INTO office_test.currency_balances (user_id, currency, amount, version, created_at, updated_at)
 VALUES
