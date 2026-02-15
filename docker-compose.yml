@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: exchange-office-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 456321
+      POSTGRES_DB: exchange_office
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 5
+    networks: [exchange-office-net]
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_PORT: 8082
+    container_name: exchange-office-api
+    ports:
+      - "8082:8082"
+    environment:
+      URL: jdbc:postgresql://db:5432/exchange_office
+      USERNAME: postgres
+      PASSWORD: 456321
+      JWT_SECRET: your-secret-key-change-this-in-production-must-be-at-least-256-bits-long
+      JAVA_TOOL_OPTIONS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [exchange-office-net]
+
+volumes:
+  db_data:
+
+networks:
+  exchange-office-net:
+    driver: bridge
+
